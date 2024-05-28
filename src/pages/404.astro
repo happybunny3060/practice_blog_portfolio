@@ -1,0 +1,14 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import TextError404 from "../components/TextError404.astro";
+const {
+  title = "404 | Workshop - Create a Blog/Portfolio in Astro & HyGraph",
+  description = "404 Page | Workshop - Create a Blog/Portfolio in Astro & HyGraph",
+} = Astro.props;
+---
+
+<MainLayout {title} {description}>
+  <section>
+    <TextError404 />
+  </section>
+</MainLayout>

@@ -1,0 +1,111 @@
+---
+// For this page also think of using NEXT/PREVIOUS page for some more functionality, but that is up to you!
+
+import TextArticle from "../../components/TextArticle.astro";
+import ProjectLayout from "../../layouts/ProjectLayout.astro";
+
+interface Project {
+  name: string;
+  slug: string;
+  description: string;
+  tags: string;
+  content: {
+    html: string;
+  };
+  demo: string;
+  sourceCode: string;
+  image: {
+    url: string;
+  };
+}
+
+interface Props {
+  project: Project;
+}
+
+export const prerender = true;
+export async function getStaticPaths() {
+  const response = await fetch(`${import.meta.env.HYGRAPH_ENDPOINT}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json/",
+    },
+    body: JSON.stringify({
+      query: `
+        {
+          projects {
+            name
+            slug
+            description
+            tags
+            content {
+              html
+            }
+            demo
+            sourceCode
+            image {
+              url
+            }
+          }
+        }
+      `,
+    }),
+  });
+  const projects = await response.json();
+  const paths = projects.data.projects.map((project) => ({
+    params: {
+      slug: project.slug,
+    },
+    props: {
+      project,
+    },
+  }));
+  return paths;
+}
+const project = Astro.props.project;
+---
+
+<ProjectLayout title={project.name}>
+  <TextArticle />
+  <div
+    class="prose dark:prose-invert prose-h1:font-bold prose-h1:text-xl prose-a:text-blue-600 prose-p:text-justify prose-p:text-yellow-300 prose-img:rounded-xl prose-headings:underline prose-headings:font-Futurewave"
+  >
+    <h2>This is how data is fetched</h2>
+  </div>
+  <div class="overflow-hidden">
+    {project.name}
+    {project.description}
+    {project.sourceCode}
+    {project.content.html}
+  </div>
+
+  <section class="my-24 max-w-7xl mx-auto">
+    <div class="flex text-xs md:text-xl font-Futurewave">
+      <a href="/">home</a>
+      <a href="/portfolio">/portfolio</a>
+      <a href={`/portfolio/${project.slug}`}>/{project.slug}</a>
+    </div>
+    <div class="flex">
+      <a class="font-Futurewave btn" href="/portfolio">go back</a>
+      <a class="font-Futurewave btn" href="/blog">go to blog</a>
+    </div>
+
+    <div
+      class="prose dark:prose-invert prose-headings:underline prose-headings:font-Futurewave prose-inline-code:rounded prose-inline-code:border"
+    >
+      <h1>{project.name}</h1>
+      <h4 class="text-lg">Key Take-Away</h4>{project.description}
+      <img
+        class="h-64 w-auto"
+        src={project.image[0].url}
+        alt={`${project.image[0].url}`}
+      />
+      <div set:html={project.content.html} />
+      <h3>Credits | sourceCode</h3>
+      <div class="text-sm">
+        <a href={project.sourceCode} target="_blank">{project.sourceCode}</a>
+      </div>
+    </div>
+  </section>
+</ProjectLayout>

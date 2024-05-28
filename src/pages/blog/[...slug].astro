@@ -1,0 +1,153 @@
+---
+// For this page also think of using NEXT/PREVIOUS page for some more functionality, but that is up to you!
+
+import TextArticle from "../../components/TextArticle.astro";
+import BlogLayout from "../../layouts/BlogLayout.astro";
+// utils import
+import { formatDate } from "../../js/utils";
+
+interface Post {
+  title: string;
+  description: string;
+  slug: string;
+  date: string;
+  content: {
+    html: string;
+  };
+  tags: string[];
+  coverImage: {
+    url: string;
+  };
+  authors: {
+    name: string;
+    intro: string;
+    picture: {
+      url: string;
+    };
+  }[];
+}
+
+interface Props {
+  post: Post;
+}
+
+export async function getStaticPaths() {
+  const response = await fetch(`${import.meta.env.HYGRAPH_ENDPOINT}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      query: `
+        {
+          posts {
+            title
+            description
+            slug
+            date
+            content {
+              html
+            }
+            tags
+            coverImage {
+              url
+            }
+            authors {
+              name
+              intro
+              picture {
+                url
+              }
+            }
+          }
+        }
+      `,
+    }),
+  });
+  const posts = await response.json();
+  const paths = posts.data.posts.map((post) => ({
+    params: {
+      slug: post.slug,
+    },
+    props: {
+      post,
+    },
+  }));
+
+  return paths;
+}
+
+const post = Astro.props.post;
+---
+
+<BlogLayout title={post.title}>
+  <TextArticle />
+  <section class="max-w-7xl mx-auto my-24">
+    <div class="flex text-xs sm:text-base">
+      <a class="font-Futurewave" href="/">home</a>
+      <a class="font-Futurewave" href="/blog">/blog</a>
+      <a class="font-Futurewave" href={`/blog/${post.slug}`}>/{post.slug}</a>
+    </div>
+    <div class="flex">
+      <a class="font-Futurewave btn" href="/blog">go back</a>
+      <a class="font-Futurewave btn" href="/portfolio">go to portfolio</a>
+    </div>
+  </section>
+
+  <section>
+    <div
+      class="prose dark:prose-invert prose-h1:font-bold prose-h1:text-xl prose-a:text-blue-600 prose-p:text-justify prose-p:text-yellow-300 prose-img:rounded-xl prose-headings:underline prose-headings:font-Futurewave"
+    >
+      <h2>Fetching the data</h2>
+    </div>
+
+    <div class="overflow-hidden">
+      {post.title}
+      {post.description}
+      {post.tags}
+      {post.date}
+      {post.coverImage.url}
+      {post.content.html}
+      {post.authors[0].name}
+      {post.authors[0].intro}
+      <!--{post.authors[0].picture.url}-->
+    </div>
+
+    <div
+      class="prose dark:prose-invert prose-headings:underline prose-headings:font-Futurewave"
+    >
+      <h2>This is the title</h2>
+      {post.title}
+
+      <h2>This is the description</h2>
+      {post.description}
+
+      <h3>These are tags</h3>
+
+      {post.tags.map((tagItem) => <p>{tagItem}</p>)}
+
+      <h3>This is the published date</h3>
+      <time>Formatted: {formatDate(post.date)}</time>
+      <p>Without format: {post.date}</p>
+
+      <h3>The main image</h3>
+      <img class="h-64 w-auto" src={post.coverImage.url} />
+
+      <h3>Main content</h3>
+      <p
+        class="mt-5 line-clamp-3 text-sm leading-6"
+        set:html={post.content.html}
+      />
+
+      <h3>Author name</h3>
+      {post.authors[0].name}
+
+      <h3>Author intro</h3>
+      {post.authors[0].intro}
+
+      <h3>Author image</h3>
+      <img class="h-16 w-16" src={post.authors[0].picture.url} />
+    </div>
+  </section>
+</BlogLayout>
